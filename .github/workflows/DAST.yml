@@ -1,0 +1,27 @@
+stages:
+  - CxOneDast
+
+dast-scan:
+  stage: CxOneDast
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - mkdir -p output
+    - chmod 777 output
+    - SCAN_RC=0
+    - |
+      docker run --name dast-scan --pull=always \
+        -e CX_APIKEY=eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkYzRkOGI5ZC0xMTA5LTQxMzUtOWNhOS0wOTRmOTQ2MzVjZGEifQ.eyJpYXQiOjE3OTM0ODYzNjIsImp0aSI6IjcwYTcxNmI4LTFlOTItNGRlZS1hYzk4LTA5NTZlYmRkYzkyNCIsImlzcyI6Imh0dHBzOi8vY3hvbmUuY2hlY2ttYXJ4LWdvdi5jb20vYXV0aC9yZWFsbXMvY2hlY2ttYXJ4LWdvdiIsImF1ZCI6Imh0dHBzOi8vY3hvbmUuY2hlY2ttYXJ4LWdvdi5jb20vYXV0aC9yZWFsbXMvY2hlY2ttYXJ4LWdvdiIsInN1YiI6ImY0MDU0YjU3LTBkYWYtNGExZi05OTQwLWU2ZTg3YzlmNGJiNiIsInR5cCI6Ik9mZmxpbmUiLCJhenAiOiJhc3QtYXBwIiwic2lkIjoiMzkzMzI2NWQtYjQyYS00M2ZmLWIzOWQtNDZjOGVmNjEyNTRhIiwic2NvcGUiOiJhc3QtYXBpIHJvbGVzIGlhbS1hcGkgcHJvZmlsZSBlbWFpbCBvZmZsaW5lX2FjY2VzcyIsImF1ZF94IjpbInJlYWxtLW1hbmFnZW1lbnQiLCJhY2NvdW50Il0sInByb3YiOiJkZWZhdWx0In0.VkD6NS3WCr0TeJdeX0bQ0L6KmBWV6ZTMpQq7j5XWO_Y2HEu31BlFpbI-Dxw8SXnPKrEM3uFIk3od7npYJIZwyA \
+        checkmarx/dast:latest \
+        scan \
+        --environment-id=6544730c-cf51-4010-bff5-8f2257a57f4c \
+        --base-url=https://cxone.checkmarx-gov.com \
+        --output=/output || SCAN_RC=$?
+    - docker cp dast-scan:/output/. ./output/ || true
+    - docker rm dast-scan || true
+    - exit $SCAN_RC
+  artifacts:
+    when: always
+    paths:
+      - output
